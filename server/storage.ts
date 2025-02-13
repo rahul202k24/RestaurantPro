@@ -1,5 +1,5 @@
 import { IStorage } from "./storage.interface";
-import { User, MenuCategory, MenuItem, QrCode, Order } from "@shared/schema";
+import { User, MenuCategory, MenuItem, QrCode, Order, Transaction } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
 
@@ -11,6 +11,7 @@ export class MemStorage implements IStorage {
   private menuItems: Map<number, MenuItem>;
   private qrCodes: Map<number, QrCode>;
   private orders: Map<number, Order>;
+  private transactions: Map<number, Transaction>;
   private currentId: { [key: string]: number };
   sessionStore: session.Store;
 
@@ -20,12 +21,14 @@ export class MemStorage implements IStorage {
     this.menuItems = new Map();
     this.qrCodes = new Map();
     this.orders = new Map();
+    this.transactions = new Map();
     this.currentId = {
       users: 1,
       menuCategories: 1,
       menuItems: 1,
       qrCodes: 1,
       orders: 1,
+      transactions: 1,
     };
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000,
@@ -104,6 +107,29 @@ export class MemStorage implements IStorage {
     if (order) {
       const updatedOrder = { ...order, status };
       this.orders.set(id, updatedOrder);
+      return updatedOrder;
+    }
+    return undefined;
+  }
+
+  async createTransaction(transaction: Omit<Transaction, "id">): Promise<Transaction> {
+    const id = this.currentId.transactions++;
+    const newTransaction = { ...transaction, id };
+    this.transactions.set(id, newTransaction);
+    return newTransaction;
+  }
+
+  async getTransactionsByOrderId(orderId: number): Promise<Transaction[]> {
+    return Array.from(this.transactions.values()).filter(
+      (transaction) => transaction.orderId === orderId
+    );
+  }
+
+  async updateOrderPaymentStatus(orderId: number, paymentStatus: string): Promise<Order | undefined> {
+    const order = this.orders.get(orderId);
+    if (order) {
+      const updatedOrder = { ...order, paymentStatus };
+      this.orders.set(orderId, updatedOrder);
       return updatedOrder;
     }
     return undefined;

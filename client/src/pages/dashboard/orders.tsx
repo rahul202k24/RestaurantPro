@@ -2,10 +2,13 @@ import { Sidebar } from "@/components/dashboard/sidebar";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Order } from "@shared/schema";
 import { Button } from "@/components/ui/button";
-import { Loader2, CheckCircle, XCircle } from "lucide-react";
+import { Loader2, CheckCircle, XCircle, CreditCard } from "lucide-react";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { PaymentTerminal } from "@/components/pos/payment-terminal";
 
 export default function OrdersPage() {
   const { data: orders, isLoading } = useQuery<Order[]>({
@@ -21,6 +24,8 @@ export default function OrdersPage() {
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
     },
   });
+
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   if (isLoading) {
     return (
@@ -106,6 +111,15 @@ export default function OrdersPage() {
                             >
                               <XCircle className="h-4 w-4 mr-2" />
                               Cancel
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setSelectedOrder(order)}
+                              className="ml-2"
+                            >
+                              <CreditCard className="h-4 w-4 mr-2" />
+                              Pay
                             </Button>
                           </div>
                         </div>
