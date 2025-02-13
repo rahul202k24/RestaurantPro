@@ -1,6 +1,6 @@
 import { IStorage } from "./storage.interface";
-import { users, menuCategories, menuItems, qrCodes, orders, transactions } from "@shared/schema";
-import type { User, MenuCategory, MenuItem, QrCode, Order, Transaction } from "@shared/schema";
+import { users, menuCategories, menuItems, qrCodes, orders } from "@shared/schema";
+import type { User, MenuCategory, MenuItem, QrCode, Order } from "@shared/schema";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
 import session from "express-session";
@@ -83,31 +83,6 @@ export class DatabaseStorage implements IStorage {
       .update(orders)
       .set({ status })
       .where(eq(orders.id, id))
-      .returning();
-    return updatedOrder;
-  }
-
-  // Transaction Methods
-  async createTransaction(transaction: Omit<Transaction, "id">): Promise<Transaction> {
-    const [newTransaction] = await db
-      .insert(transactions)
-      .values(transaction)
-      .returning();
-    return newTransaction;
-  }
-
-  async getTransactionsByOrderId(orderId: number): Promise<Transaction[]> {
-    return await db
-      .select()
-      .from(transactions)
-      .where(eq(transactions.orderId, orderId));
-  }
-
-  async updateOrderPaymentStatus(orderId: number, paymentStatus: string): Promise<Order | undefined> {
-    const [updatedOrder] = await db
-      .update(orders)
-      .set({ paymentStatus })
-      .where(eq(orders.id, orderId))
       .returning();
     return updatedOrder;
   }

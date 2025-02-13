@@ -78,34 +78,6 @@ export function registerRoutes(app: Express): Server {
     res.json(order);
   });
 
-  app.post("/api/orders/:id/payment", async (req, res) => {
-    const orderId = Number(req.params.id);
-    const { amount, paymentMethod } = req.body;
-
-    // Create a new transaction
-    const transaction = await storage.createTransaction({
-      orderId,
-      amount,
-      paymentMethod,
-      status: "completed",
-      createdAt: new Date(),
-    });
-
-    // Update order payment status
-    const updatedOrder = await storage.updateOrderPaymentStatus(orderId, "paid");
-    if (!updatedOrder) {
-      return res.status(404).send("Order not found");
-    }
-
-    res.status(201).json({ transaction, order: updatedOrder });
-  });
-
-  app.get("/api/orders/:id/transactions", async (req, res) => {
-    const orderId = Number(req.params.id);
-    const transactions = await storage.getTransactionsByOrderId(orderId);
-    res.json(transactions);
-  });
-
   const httpServer = createServer(app);
   return httpServer;
 }

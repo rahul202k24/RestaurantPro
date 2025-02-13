@@ -44,23 +44,12 @@ export const orders = pgTable("orders", {
   id: serial("id").primaryKey(),
   tableNumber: integer("table_number").notNull(),
   status: text("status").notNull().default("pending"),
-  paymentStatus: text("payment_status").notNull().default("unpaid"),
   items: json("items").$type<{
     menuItemId: number;
     quantity: number;
     modifiers?: { name: string; option: string }[];
   }[]>(),
   total: integer("total").notNull(), // stored in cents
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-});
-
-// Add new types for POS transactions after the existing types
-export const transactions = pgTable("transactions", {
-  id: serial("id").primaryKey(),
-  orderId: integer("order_id").notNull(),
-  amount: integer("amount").notNull(), // stored in cents
-  paymentMethod: text("payment_method").notNull(),
-  status: text("status").notNull().default("pending"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -75,11 +64,6 @@ export const insertMenuItemSchema = createInsertSchema(menuItems);
 export const insertQrCodeSchema = createInsertSchema(qrCodes);
 export const insertOrderSchema = createInsertSchema(orders);
 
-// Add new insert schema
-export const insertTransactionSchema = createInsertSchema(transactions).omit({
-  id: true,
-  createdAt: true,
-});
 
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -88,7 +72,3 @@ export type MenuCategory = typeof menuCategories.$inferSelect;
 export type MenuItem = typeof menuItems.$inferSelect;
 export type QrCode = typeof qrCodes.$inferSelect;
 export type Order = typeof orders.$inferSelect;
-
-// Add new type
-export type Transaction = typeof transactions.$inferSelect;
-export type InsertTransaction = z.infer<typeof insertTransactionSchema>;
