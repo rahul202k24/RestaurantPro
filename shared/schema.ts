@@ -44,6 +44,7 @@ export const orders = pgTable("orders", {
   id: serial("id").primaryKey(),
   tableNumber: integer("table_number").notNull(),
   status: text("status").notNull().default("pending"),
+  paymentStatus: text("payment_status"), // Made optional instead of removing
   items: json("items").$type<{
     menuItemId: number;
     quantity: number;
@@ -62,8 +63,9 @@ export const insertUserSchema = createInsertSchema(users).pick({
 export const insertMenuCategorySchema = createInsertSchema(menuCategories);
 export const insertMenuItemSchema = createInsertSchema(menuItems);
 export const insertQrCodeSchema = createInsertSchema(qrCodes);
-export const insertOrderSchema = createInsertSchema(orders);
-
+export const insertOrderSchema = createInsertSchema(orders).omit({
+  paymentStatus: true // Exclude from insert schema since we don't need it anymore
+});
 
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
