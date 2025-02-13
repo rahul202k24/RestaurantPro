@@ -41,15 +41,20 @@ export function MenuItemForm({
       categoryId: initialData?.categoryId || categories[0]?.id,
       available: initialData?.available ?? true,
       modifiers: initialData?.modifiers || [],
+      imageUrl: initialData?.imageUrl || null, //Added default value for imageUrl
     },
   });
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit((data) => {
+        if (typeof data.price === 'undefined') {
+          return;
+        }
         onSubmit({
           ...data,
           price: Math.round(data.price * 100), // Convert to cents
+          imageUrl: data.imageUrl || null,
         });
       })} className="space-y-6">
         <FormField
@@ -93,6 +98,20 @@ export function MenuItemForm({
                   step="0.01"
                   onChange={(e) => field.onChange(parseFloat(e.target.value))}
                 />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="imageUrl"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Image URL (optional)</FormLabel>
+              <FormControl>
+                <Input {...field} type="url" placeholder="https://..." />
               </FormControl>
               <FormMessage />
             </FormItem>

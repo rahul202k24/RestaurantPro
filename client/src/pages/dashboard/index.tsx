@@ -18,10 +18,14 @@ export default function DashboardPage() {
     queryKey: ["/api/menu/items"] 
   });
 
-  const today = new Date().toISOString().split('T')[0];
-  const todayOrders = orders?.filter(
-    order => order.createdAt.startsWith(today)
-  ) || [];
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const todayOrders = orders?.filter(order => {
+    const orderDate = new Date(order.createdAt);
+    orderDate.setHours(0, 0, 0, 0);
+    return orderDate.getTime() === today.getTime();
+  }) || [];
 
   const totalRevenue = todayOrders.reduce((sum, order) => sum + order.total, 0);
   const totalOrders = todayOrders.length;

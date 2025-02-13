@@ -33,26 +33,28 @@ export default function ReportsPage() {
     );
   }
 
-  // Calculate daily revenue for the last 7 days
+  // Replace the revenue data calculation
   const revenueData = Array.from({ length: 7 }, (_, i) => {
     const date = new Date();
     date.setDate(date.getDate() - i);
-    const dateStr = date.toISOString().split('T')[0];
-    
-    const dayOrders = orders?.filter(
-      order => order.createdAt.startsWith(dateStr)
-    ) || [];
-    
+    date.setHours(0, 0, 0, 0);
+
+    const dayOrders = orders?.filter(order => {
+      const orderDate = new Date(order.createdAt);
+      orderDate.setHours(0, 0, 0, 0);
+      return orderDate.getTime() === date.getTime();
+    }) || [];
+
     return {
-      date: dateStr,
+      date: date.toISOString().split('T')[0],
       revenue: dayOrders.reduce((sum, order) => sum + order.total, 0) / 100,
     };
   }).reverse();
 
-  // Calculate popular items
+  // Fix the item counts calculation
   const itemCounts = new Map<number, number>();
   orders?.forEach(order => {
-    order.items.forEach(item => {
+    order.items?.forEach(item => {
       const count = itemCounts.get(item.menuItemId) || 0;
       itemCounts.set(item.menuItemId, count + item.quantity);
     });

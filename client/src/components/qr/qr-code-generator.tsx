@@ -29,7 +29,7 @@ export function QrCodeGenerator({ onSubmit }: QrCodeGeneratorProps) {
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      tableNumber: undefined,
+      tableNumber: 1, // Set a default value instead of undefined
       customization: {
         color: "#000000",
         logo: "",
@@ -40,7 +40,16 @@ export function QrCodeGenerator({ onSubmit }: QrCodeGeneratorProps) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit((data) => {
+        onSubmit({
+          tableNumber: data.tableNumber,
+          customization: {
+            color: data.customization.color || undefined,
+            logo: data.customization.logo || undefined,
+            pattern: data.customization.pattern || undefined,
+          },
+        });
+      })} className="space-y-6">
         <FormField
           control={form.control}
           name="tableNumber"

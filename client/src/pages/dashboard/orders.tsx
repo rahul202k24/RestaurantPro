@@ -61,7 +61,7 @@ export default function OrdersPage() {
                     <CardContent>
                       <div className="space-y-4">
                         <div>
-                          {order.items.map((item, index) => (
+                          {order.items?.map((item, index) => (
                             <div
                               key={index}
                               className="flex justify-between items-center text-sm py-1"
@@ -133,7 +133,7 @@ export default function OrdersPage() {
                     <CardContent>
                       <div className="space-y-4">
                         <div>
-                          {order.items.map((item, index) => (
+                          {order.items?.map((item, index) => (
                             <div
                               key={index}
                               className="flex justify-between items-center text-sm py-1"
@@ -148,7 +148,9 @@ export default function OrdersPage() {
                           <span className="font-semibold">
                             Total: ${(order.total / 100).toFixed(2)}
                           </span>
-                          <Badge variant="success">Completed</Badge>
+                          <Badge variant="outline" className="bg-green-100 text-green-800">
+                            Completed
+                          </Badge>
                         </div>
                       </div>
                     </CardContent>
