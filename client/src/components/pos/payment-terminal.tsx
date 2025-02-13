@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CreditCard, Banknote, Wallet } from "lucide-react";
+import { CreditCard, Banknote, Wallet, CheckCircle, Loader2 } from "lucide-react";
 
 const paymentMethods = [
   { id: "credit", label: "Credit Card", icon: CreditCard },

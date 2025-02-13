@@ -1,139 +1,116 @@
 import { IStorage } from "./storage.interface";
-import { User, MenuCategory, MenuItem, QrCode, Order, Transaction } from "@shared/schema";
+import { users, menuCategories, menuItems, qrCodes, orders, transactions } from "@shared/schema";
+import type { User, MenuCategory, MenuItem, QrCode, Order, Transaction } from "@shared/schema";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 import session from "express-session";
-import createMemoryStore from "memorystore";
+import connectPg from "connect-pg-simple";
+import { pool } from "./db";
 
-const MemoryStore = createMemoryStore(session);
+const PostgresSessionStore = connectPg(session);
 
-export class MemStorage implements IStorage {
-  private users: Map<number, User>;
-  private menuCategories: Map<number, MenuCategory>;
-  private menuItems: Map<number, MenuItem>;
-  private qrCodes: Map<number, QrCode>;
-  private orders: Map<number, Order>;
-  private transactions: Map<number, Transaction>;
-  private currentId: { [key: string]: number };
+export class DatabaseStorage implements IStorage {
   sessionStore: session.Store;
 
   constructor() {
-    this.users = new Map();
-    this.menuCategories = new Map();
-    this.menuItems = new Map();
-    this.qrCodes = new Map();
-    this.orders = new Map();
-    this.transactions = new Map();
-    this.currentId = {
-      users: 1,
-      menuCategories: 1,
-      menuItems: 1,
-      qrCodes: 1,
-      orders: 1,
-      transactions: 1,
-    };
-    this.sessionStore = new MemoryStore({
-      checkPeriod: 86400000,
+    this.sessionStore = new PostgresSessionStore({
+      pool,
+      createTableIfMissing: true,
     });
   }
 
   // User Methods
   async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
   }
 
   async createUser(user: Omit<User, "id">): Promise<User> {
-    const id = this.currentId.users++;
-    const newUser = { ...user, id };
-    this.users.set(id, newUser);
+    const [newUser] = await db.insert(users).values(user).returning();
     return newUser;
   }
 
   // Menu Category Methods
   async getMenuCategories(): Promise<MenuCategory[]> {
-    return Array.from(this.menuCategories.values());
+    return await db.select().from(menuCategories);
   }
 
   async createMenuCategory(category: Omit<MenuCategory, "id">): Promise<MenuCategory> {
-    const id = this.currentId.menuCategories++;
-    const newCategory = { ...category, id };
-    this.menuCategories.set(id, newCategory);
+    const [newCategory] = await db.insert(menuCategories).values(category).returning();
     return newCategory;
   }
 
   // Menu Item Methods
   async getMenuItems(categoryId?: number): Promise<MenuItem[]> {
-    const items = Array.from(this.menuItems.values());
-    return categoryId ? items.filter(item => item.categoryId === categoryId) : items;
+    if (categoryId) {
+      return await db.select().from(menuItems).where(eq(menuItems.categoryId, categoryId));
+    }
+    return await db.select().from(menuItems);
   }
 
   async createMenuItem(item: Omit<MenuItem, "id">): Promise<MenuItem> {
-    const id = this.currentId.menuItems++;
-    const newItem = { ...item, id };
-    this.menuItems.set(id, newItem);
+    const [newItem] = await db.insert(menuItems).values(item).returning();
     return newItem;
   }
 
   // QR Code Methods
   async getQrCodes(): Promise<QrCode[]> {
-    return Array.from(this.qrCodes.values());
+    return await db.select().from(qrCodes);
   }
 
   async createQrCode(qrCode: Omit<QrCode, "id">): Promise<QrCode> {
-    const id = this.currentId.qrCodes++;
-    const newQrCode = { ...qrCode, id };
-    this.qrCodes.set(id, newQrCode);
+    const [newQrCode] = await db.insert(qrCodes).values(qrCode).returning();
     return newQrCode;
   }
 
   // Order Methods
   async getOrders(): Promise<Order[]> {
-    return Array.from(this.orders.values());
+    return await db.select().from(orders);
   }
 
   async createOrder(order: Omit<Order, "id">): Promise<Order> {
-    const id = this.currentId.orders++;
-    const newOrder = { ...order, id };
-    this.orders.set(id, newOrder);
+    const [newOrder] = await db.insert(orders).values(order).returning();
     return newOrder;
   }
 
   async updateOrderStatus(id: number, status: string): Promise<Order | undefined> {
-    const order = this.orders.get(id);
-    if (order) {
-      const updatedOrder = { ...order, status };
-      this.orders.set(id, updatedOrder);
-      return updatedOrder;
-    }
-    return undefined;
+    const [updatedOrder] = await db
+      .update(orders)
+      .set({ status })
+      .where(eq(orders.id, id))
+      .returning();
+    return updatedOrder;
   }
 
+  // Transaction Methods
   async createTransaction(transaction: Omit<Transaction, "id">): Promise<Transaction> {
-    const id = this.currentId.transactions++;
-    const newTransaction = { ...transaction, id };
-    this.transactions.set(id, newTransaction);
+    const [newTransaction] = await db
+      .insert(transactions)
+      .values(transaction)
+      .returning();
     return newTransaction;
   }
 
   async getTransactionsByOrderId(orderId: number): Promise<Transaction[]> {
-    return Array.from(this.transactions.values()).filter(
-      (transaction) => transaction.orderId === orderId
-    );
+    return await db
+      .select()
+      .from(transactions)
+      .where(eq(transactions.orderId, orderId));
   }
 
   async updateOrderPaymentStatus(orderId: number, paymentStatus: string): Promise<Order | undefined> {
-    const order = this.orders.get(orderId);
-    if (order) {
-      const updatedOrder = { ...order, paymentStatus };
-      this.orders.set(orderId, updatedOrder);
-      return updatedOrder;
-    }
-    return undefined;
+    const [updatedOrder] = await db
+      .update(orders)
+      .set({ paymentStatus })
+      .where(eq(orders.id, orderId))
+      .returning();
+    return updatedOrder;
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
